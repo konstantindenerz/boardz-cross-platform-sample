@@ -69,7 +69,7 @@
                 path:  path.join(config.targets.electronFolder, 'www')
             });
             
-            gulp.start('[private-web]:watch:no-liveserver');
+            gulp.start('[private-web]:watch:no-browser-sync');
 
             runSequence('build-electron', function () {
                 electronServer.start(['--livereload']);

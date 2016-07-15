@@ -9,7 +9,8 @@
             runSequence = require('run-sequence'),
             watch = require('gulp-watch'),
             batch = require('gulp-batch'),
-            server = require('gulp-server-livereload'),
+            browserSync = require('browser-sync'),
+            browserSyncConfigIos = require('../configs/bs.config.cordova.ios.js'),
             path = require('path'),
             tap = require('gulp-tap'),
             rename = require('gulp-rename');
@@ -42,15 +43,11 @@
                 .pipe(gulp.dest(path.join(config.targets.cordovaFolder, 'www')));
         });
 
-        gulp.task('[private-cordova]:start-live-server:ios', function () {
-            return gulp.src(path.join(config.targets.cordovaFolder, 'platforms', 'ios', 'www'))
-                .pipe(server({
-                    livereload: true,
-                    open: false
-                }));
+        gulp.task('[private-cordova]:start-browser-sync:ios', function () {
+            browserSync.init(browserSyncConfigIos);
         });
 
-        gulp.task('watch-cordova-ios', ['[private-cordova]:start-live-server:ios'], function () {
+        gulp.task('watch-cordova-ios', ['[private-cordova]:start-browser-sync:ios'], function () {
             runSequence('[private-cordova]:clean',
                 '[private-cordova]:copy-source',
                 '[private-cordova]:remove-fake-script',

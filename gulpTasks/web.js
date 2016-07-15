@@ -1,4 +1,4 @@
-// Contains everything to develop BoardZ! using a live-reload server
+// Contains everything to develop BoardZ! using a Browsersync
 
 (function () {
     'use strict';
@@ -7,7 +7,8 @@
         var del = require('del'),
             path = require('path'),
             runSequence = require('run-sequence'),
-            server = require('gulp-server-livereload'),
+            browserSync = require('browser-sync').create(),
+            browserSyncConfig = require('../configs/bs.config'),
             watch = require('gulp-watch'),
             batch = require('gulp-batch'),
             cleanCss = require('gulp-clean-css'),
@@ -89,19 +90,22 @@
             return gulp.src(config.source.files.vendorStylesheets)
                 .pipe(concat(config.targets.vendorMinCss))
                 .pipe(cleanCss())
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.stylesFolder)));
+                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.stylesFolder)))
+                .pipe(browserSync.stream());
         });
 
         gulp.task('[private-web]:copy-app-styles', function () {
             return gulp.src(config.source.files.app.css)
                 .pipe(cleanCss())
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.stylesFolder)));
+                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.stylesFolder)))
+                .pipe(browserSync.stream());
         });
 
         gulp.task('[private-web]:copy-component-styles', function () {
             return gulp.src(config.source.files.app.componentCss)
                 .pipe(cleanCss())
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.appFolder)));
+                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.appFolder)))
+                .pipe(browserSync.stream());
         });
 
         gulp.task('[private-web]:copy-app-html', function () {
@@ -117,9 +121,10 @@
                 .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.appFolder)));
         });
 
-        gulp.task('[private-web]:watch:no-liveserver', function () {
+        gulp.task('[private-web]:watch:no-browser-sync', function () {
             return deltaWatch();
         });
+
 
         gulp.task('build-web', function (done) {
             return runSequence(
@@ -144,19 +149,25 @@
             );
         });
 
-        gulp.task('[private-web]:start-live-server', ['build-web'], function () {
-            return gulp.src(config.targets.buildFolder)
-                .pipe(server({
-                    livereload: true,
-                    open: true
-                }));
+        gulp.task('[private-web]:start-browser-sync', ['build-web'], function () {
+            browserSync.init(browserSyncConfig);
         });
 
-        gulp.task('watch-web', ['[private-web]:start-live-server'], function () {
+        gulp.task('[private-web]:browser-sync-reload', function (done) {
+            browserSync.reload();
+            done();
+        });
+
+        gulp.task('watch-web', ['[private-web]:start-browser-sync'], function () {
             deltaWatch();
         });
 
         function deltaWatch() {
+            gulp.watch(config.source.files.app.css, ['[private-web]:copy-app-styles']);
+            gulp.watch(config.source.files.app.componentCss, ['[private-web]:copy-component-styles']);
+            gulp.watch(config.source.files.vendorStylesheets, ['[private-web]:vendor-css']);
+
+
             return watch(config.source.files.app.everything, batch(function (events, done) {
                 console.log(arguments);
 

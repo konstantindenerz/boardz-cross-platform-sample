@@ -13,7 +13,7 @@
     "watch": "gulp watch-web",
     "postinstall": "typings install",
     "build": "gulp",
-    "watch-ios": "gulp [private-web]:watch:no-liveserver & gulp cordova:watch:ios"
+    "watch-ios": "gulp [private-web]:watch:no-browser-sync & gulp watch-cordova-ios"
   },
   "author": "Thinktecture AG <office@thinktecture.com>",
   "bugs": {
@@ -22,6 +22,7 @@
   "homepage": "https://github.com/thinktecture/boardz-cross-platform-sample#readme",
   "devDependencies": {
     "bootstrap": "^3.3.6",
+    "browser-sync": "^2.13.0",
     "cordova-icon": "^0.7.0",
     "cordova-splash": "^0.7.1",
     "del": "^2.0.2",
@@ -42,7 +43,6 @@
     "gulp-ng-template": "^0.2.1",
     "gulp-rename": "^1.2.2",
     "gulp-rewrite-css": "0.0.7",
-    "gulp-server-livereload": "^1.5.3",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-symdest": "^1.0.0",
     "gulp-tap": "^0.1.3",
