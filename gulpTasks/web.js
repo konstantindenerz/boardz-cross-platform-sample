@@ -41,21 +41,26 @@
                     var promises = [];
 
                     config.source.files.vendorJs.forEach(function (jsFile) {
-                        promises.push(builder.bundle(jsFile, path.join(config.targets.buildFolder, 'scripts/bundles/', path.basename(jsFile))));
+                        promises.push(builder.bundle(jsFile, path.join(config.targets.buildFolder, 'scripts/bundles', path.basename(jsFile))));
                     });
 
                     return Promise.all(promises);
                 })
         });
 
-        gulp.task('[private-web]:copy-angular2-scripts', function () {
-            return gulp.src(config.source.files.angular2)
+        gulp.task('[private-web]:bundle-angular2-scripts', function () {
+            return gulp.src('./node_modules/@angular/**/*.umd.js')
                 .pipe(gulp.dest(path.join(config.targets.buildFolder, '@angular')));
         });
 
-        gulp.task('[private-web]:copy-rxjs-scripts', function () {
-            return gulp.src(config.source.files.rxjs)
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, 'rxjs')));
+        gulp.task('[private-web]:bundle-rxjs-scripts', function () {
+            const builder = new Builder({
+                baseURL: 'node_modules',
+                packages: {
+                    'rxjs': { main: 'Rx', defaultExtension: 'js' }
+                }
+            });
+            return builder.bundle('rxjs', path.join(config.targets.buildFolder, 'scripts/bundles', 'Rx.js'));
         });
 
         gulp.task('[private-web]:copy-system-setup-script', function () {
@@ -131,8 +136,8 @@
                 'clean',
                 [
                     '[private-web]:bundle-vendor-scripts',
-                    '[private-web]:copy-angular2-scripts',
-                    '[private-web]:copy-rxjs-scripts',
+                    '[private-web]:bundle-angular2-scripts',
+                    '[private-web]:bundle-rxjs-scripts',
                     '[private-web]:copy-system-setup-script',
                     '[private-web]:copy-cordova-script',
                     '[private-web]:copy-system',

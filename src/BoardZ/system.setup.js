@@ -6,8 +6,8 @@
     var map = {
         'app': 'app', // 'dist',
         '@angular': '@angular',
-        'rxjs': 'rxjs',
-        'jquery': 'scripts/bundles/jquery-2.1.4.js',
+        'rxjs': 'scripts/bundles',
+        'jq': 'scripts/bundles/jquery-2.1.4.js',
         'bootstrap/js/bootstrap': 'scripts/bundles/bootstrap.js',
         'admin-lte/js/app': 'scripts/bundles/app.js',
         'jquery/jquery.hammer': 'scripts/bundles/jquery.hammer.js',
@@ -23,20 +23,20 @@
     // packages tells the System loader how to load when no filename and/or no extension
     var packages = {
         'app': { main: 'main.js', defaultExtension: 'js' },
-        'rxjs': { defaultExtension: 'js' },
-        '@angular/common': { main: 'index.js', defaultExtension: 'js' },
-        '@angular/compiler': { main: 'index.js', defaultExtension: 'js' },
-        '@angular/core': { main: 'index.js', defaultExtension: 'js' },
-        '@angular/http': { main: 'index.js', defaultExtension: 'js' },
-        '@angular/platform-browser': { main: 'index.js', defaultExtension: 'js' },
-        '@angular/platform-browser-dynamic': { main: 'index.js', defaultExtension: 'js' },
-        '@angular/router-deprecated': { main: 'index.js', defaultExtension: 'js' },
+        'rxjs': {main:'Rx.js', defaultExtension: 'js'},
+        '@angular/common': { main: 'bundles/common.umd.js', defaultExtension: 'js' },
+        '@angular/compiler': { main: 'bundles/compiler.umd.js', defaultExtension: 'js' },
+        '@angular/core': { main: 'bundles/core.umd.js', defaultExtension: 'js' },
+        '@angular/http': { main: 'bundles/http.umd.js', defaultExtension: 'js' },
+        '@angular/platform-browser': { main: 'bundles/platform-browser.umd.js', defaultExtension: 'js' },
+        '@angular/platform-browser-dynamic': { main: 'bundles/platform-browser-dynamic.umd.js', defaultExtension: 'js' },
+        '@angular/router-deprecated': { main: 'bundles/router-deprecated.umd.js', defaultExtension: 'js' },
     };
 
     var config = {
         map: map,
         packages: packages
-    }
+    };
     System.config(config);
 })(this);
 
@@ -61,12 +61,14 @@ function restoreModule() {
 
 backupModule()
     .then(function () {
-        return System.import('jquery');
+        return System.import('jq');
     })
     .then(function () {
         return restoreModule();
     })
     .then(function () {
+        return System.import('rxjs');
+    }).then(function () {
         return System.import('app/main');
     })
     .then(null, console.error.bind(console));
