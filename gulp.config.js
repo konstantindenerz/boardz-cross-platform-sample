@@ -23,7 +23,6 @@ module.exports = {
             ],
             systemSetupScript: './src/BoardZ/system.setup.js',
             app: {
-                everything: ['./src/BoardZ/app/**/*', './src/BoardZ/system.setup.js'],
                 ts: [
                     './src/BoardZ/app/**/*.ts'
                 ],

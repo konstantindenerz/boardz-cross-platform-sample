@@ -36,6 +36,7 @@
     "gulp-batch": "1.0.5",
     "gulp-clean-css": "^2.0.10",
     "gulp-concat": "^2.6.0",
+    "gulp-count": "^0.2.0",
     "gulp-filelog": "^0.4.1",
     "gulp-inject": "^3.0.0",
     "gulp-minify-html": "^1.0.4",

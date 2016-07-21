@@ -21,7 +21,8 @@
             inject = require('gulp-inject'),
             uglify = require('gulp-uglify'),
             watch = require('gulp-watch'),
-            Builder = require('systemjs-builder');
+            Builder = require('systemjs-builder'),
+            count = require('gulp-count');
 
         gulp.task('[private-web]:copy-template', function () {
             var sources = gulp.src(config.source.files.injectables);
@@ -113,18 +114,40 @@
                 .pipe(browserSync.stream());
         });
 
+        let appHtmlDeltaFiles = [];
+
         gulp.task('[private-web]:copy-app-html', function () {
-            return gulp.src(config.source.files.app.html)
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.appFolder)));
+            let files = config.source.files.app.html;
+            if (appHtmlDeltaFiles.length) {
+                files = appHtmlDeltaFiles;
+            }
+            return copyAppHtmlFiles(files);
+
         });
 
+        function copyAppHtmlFiles(files) {
+            return gulp.src(files, { base: config.source.folder })
+                .pipe(gulp.dest(config.targets.buildFolder))
+                .pipe(count('Copied ## HTML files'));
+        }
+
+        let tsDeltaFiles = [];
         gulp.task('[private-web]:build-app-scripts', function () {
-            return gulp.src(config.source.files.app.ts)
+            let files = config.source.files.app.ts;
+            if (tsDeltaFiles.length) {
+                files = tsDeltaFiles;
+            }
+            return transpileTypeScript(files);
+        });
+
+        function transpileTypeScript(files) {
+            return gulp.src(files, { base: config.source.folder })
                 .pipe(sourcemaps.init())
                 .pipe(ts(tsConfig))
                 .pipe(sourcemaps.write('.'))
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, config.targets.appFolder)));
-        });
+                .pipe(gulp.dest(config.targets.buildFolder))
+                .pipe(count('Generated ## JS files'));
+        }
 
         gulp.task('[private-web]:watch:no-browser-sync', function () {
             return deltaWatch();
@@ -167,17 +190,36 @@
             deltaWatch();
         });
 
+        /**
+         * @param {Array} target
+         * @param {StreamArray} source
+         */
+        function fillFilePathArray(target, source) {
+            let file;
+            while (file = source.read()) {
+                target.push(file.path);
+            }
+        }
+
         function deltaWatch() {
             gulp.watch(config.source.files.app.css, ['[private-web]:copy-app-styles']);
             gulp.watch(config.source.files.app.componentCss, ['[private-web]:copy-component-styles']);
             gulp.watch(config.source.files.vendorStylesheets, ['[private-web]:vendor-css']);
 
-
-            return watch(config.source.files.app.everything, batch(function (events, done) {
-                console.log(arguments);
-
-                runSequence('[private-web]:copy-system-setup-script', '[private-web]:copy-app-html', '[private-web]:build-app-scripts', done);
+            gulp.watch(config.source.files.app.ts, batch(function (fileStreamArray, done) {
+                tsDeltaFiles.length = 0;
+                fillFilePathArray(tsDeltaFiles, fileStreamArray);
+                runSequence('[private-web]:build-app-scripts', '[private-web]:browser-sync-reload', done);
             }));
+
+            gulp.watch(config.source.files.app.html, batch(function (fileStreamArray, done) {
+                appHtmlDeltaFiles.length = 0;
+                fillFilePathArray(appHtmlDeltaFiles, fileStreamArray);
+                runSequence('[private-web]:copy-app-html', '[private-web]:browser-sync-reload', done);
+            }));
+
+            gulp.watch(config.source.files.systemSetupScript, ['[private-web]:copy-system-setup-script', '[private-web]:browser-sync-reload']);
+            gulp.watch(config.source.files.main, ['[private-web]:copy-template', '[private-web]:browser-sync-reload']);
         }
     }
 
