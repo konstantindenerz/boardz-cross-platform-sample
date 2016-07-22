@@ -22,7 +22,9 @@
             uglify = require('gulp-uglify'),
             watch = require('gulp-watch'),
             Builder = require('systemjs-builder'),
-            count = require('gulp-count');
+            count = require('gulp-count'),
+            embedTemplates = require('gulp-angular2-embed-templates'),
+            replaceExt = require('replace-ext');
 
         gulp.task('[private-web]:copy-template', function () {
             var sources = gulp.src(config.source.files.injectables);
@@ -114,23 +116,6 @@
                 .pipe(browserSync.stream());
         });
 
-        let appHtmlDeltaFiles = [];
-
-        gulp.task('[private-web]:copy-app-html', function () {
-            let files = config.source.files.app.html;
-            if (appHtmlDeltaFiles.length) {
-                files = appHtmlDeltaFiles;
-            }
-            return copyAppHtmlFiles(files);
-
-        });
-
-        function copyAppHtmlFiles(files) {
-            return gulp.src(files, { base: config.source.folder })
-                .pipe(gulp.dest(config.targets.buildFolder))
-                .pipe(count('Copied ## HTML files'));
-        }
-
         let tsDeltaFiles = [];
         gulp.task('[private-web]:build-app-scripts', function () {
             let files = config.source.files.app.ts;
@@ -143,6 +128,16 @@
         function transpileTypeScript(files) {
             return gulp.src(files, { base: config.source.folder })
                 .pipe(sourcemaps.init())
+                .pipe(embedTemplates({
+                    sourceType: 'ts',
+                    minimize: {
+                        empty: true,
+                        cdata: true,
+                        comments: true,
+                        spare: true,
+                        quotes: true
+                    }
+                }))
                 .pipe(ts(tsConfig))
                 .pipe(sourcemaps.write('.'))
                 .pipe(gulp.dest(config.targets.buildFolder))
@@ -167,7 +162,6 @@
                     '[private-web]:build-app-scripts',
                     '[private-web]:vendor-css',
                     '[private-web]:copy-fonts',
-                    '[private-web]:copy-app-html',
                     '[private-web]:copy-app-styles',
                     '[private-web]:copy-component-styles',
                     '[private-web]:copy-app-assets'
@@ -194,10 +188,14 @@
          * @param {Array} target
          * @param {StreamArray} source
          */
-        function fillFilePathArray(target, source) {
+        function fillFilePathArray(target, source, pathProcessor) {
             let file;
             while (file = source.read()) {
-                target.push(file.path);
+                let path = file.path;
+                if (pathProcessor) {
+                    path = pathProcessor(path);
+                }
+                target.push(path);
             }
         }
 
@@ -213,9 +211,9 @@
             }));
 
             gulp.watch(config.source.files.app.html, batch(function (fileStreamArray, done) {
-                appHtmlDeltaFiles.length = 0;
-                fillFilePathArray(appHtmlDeltaFiles, fileStreamArray);
-                runSequence('[private-web]:copy-app-html', '[private-web]:browser-sync-reload', done);
+                tsDeltaFiles.length = 0;
+                fillFilePathArray(tsDeltaFiles, fileStreamArray, (path) => replaceExt(path, '.ts'));
+                runSequence('[private-web]:build-app-scripts', '[private-web]:browser-sync-reload', done);
             }));
 
             gulp.watch(config.source.files.systemSetupScript, ['[private-web]:copy-system-setup-script', '[private-web]:browser-sync-reload']);
