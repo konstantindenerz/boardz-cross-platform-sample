@@ -6,7 +6,7 @@
     function RegisterTasks(gulp, config) {
         var del = require('del'),
             path = require('path'),
-            runSequence = require('run-sequence'),
+            run = require('run-sequence'),
             browserSync = require('browser-sync').create(),
             browserSyncConfig = require('../configs/bs.config'),
             watch = require('gulp-watch'),
@@ -116,17 +116,12 @@
                 .pipe(browserSync.stream());
         });
 
-        let tsDeltaFiles = [];
         gulp.task('[private-web]:build-app-scripts', function () {
-            let files = config.source.files.app.ts;
-            if (tsDeltaFiles.length) {
-                files = tsDeltaFiles;
-            }
-            return transpileTypeScript(files);
+            return transpileTypeScript(gulp.src(config.source.files.app.ts, { base: config.source.folder }));
         });
 
         function transpileTypeScript(files) {
-            return gulp.src(files, { base: config.source.folder })
+            let result = files
                 .pipe(sourcemaps.init())
                 .pipe(embedTemplates({
                     sourceType: 'ts',
@@ -142,6 +137,10 @@
                 .pipe(sourcemaps.write('.'))
                 .pipe(gulp.dest(config.targets.buildFolder))
                 .pipe(count('Generated ## JS files'));
+            result.on('end', () => {
+                browserSync.reload();
+            });
+            return result;
         }
 
         gulp.task('[private-web]:watch:no-browser-sync', function () {
@@ -150,7 +149,7 @@
 
 
         gulp.task('build-web', function (done) {
-            return runSequence(
+            return run(
                 'clean',
                 [
                     '[private-web]:bundle-vendor-scripts',
@@ -184,40 +183,33 @@
             deltaWatch();
         });
 
-        /**
-         * @param {Array} target
-         * @param {StreamArray} source
-         */
-        function fillFilePathArray(target, source, pathProcessor) {
+        function getFiles(source, pathProcessor) {
+            let result = [];
             let file;
             while (file = source.read()) {
                 let path = file.path;
                 if (pathProcessor) {
                     path = pathProcessor(path);
                 }
-                target.push(path);
+                result.push(path);
             }
+            console.log('FILES', result);
+            return result;
         }
 
         function deltaWatch() {
-            gulp.watch(config.source.files.app.css, ['[private-web]:copy-app-styles']);
-            gulp.watch(config.source.files.app.componentCss, ['[private-web]:copy-component-styles']);
-            gulp.watch(config.source.files.vendorStylesheets, ['[private-web]:vendor-css']);
+            watch(config.source.files.app.css, () => run('[private-web]:copy-app-styles'));
+            watch(config.source.files.app.componentCss, () => run('[private-web]:copy-component-styles'));
+            watch(config.source.files.vendorStylesheets, () => run('[private-web]:vendor-css'));
 
-            gulp.watch(config.source.files.app.ts, batch(function (fileStreamArray, done) {
-                tsDeltaFiles.length = 0;
-                fillFilePathArray(tsDeltaFiles, fileStreamArray);
-                runSequence('[private-web]:build-app-scripts', '[private-web]:browser-sync-reload', done);
+            watch(config.source.files.app.ts, { base: config.source.folder }, batch((fileStreamArray, done) => transpileTypeScript(fileStreamArray)));
+
+            watch(config.source.files.app.html, batch(function (fileStreamArray, done) {
+                return transpileTypeScript(gulp.src(getFiles(fileStreamArray, (path) => replaceExt(path, '.ts')), { base: config.source.folder }));
             }));
 
-            gulp.watch(config.source.files.app.html, batch(function (fileStreamArray, done) {
-                tsDeltaFiles.length = 0;
-                fillFilePathArray(tsDeltaFiles, fileStreamArray, (path) => replaceExt(path, '.ts'));
-                runSequence('[private-web]:build-app-scripts', '[private-web]:browser-sync-reload', done);
-            }));
-
-            gulp.watch(config.source.files.systemSetupScript, ['[private-web]:copy-system-setup-script', '[private-web]:browser-sync-reload']);
-            gulp.watch(config.source.files.main, ['[private-web]:copy-template', '[private-web]:browser-sync-reload']);
+            watch(config.source.files.systemSetupScript, () => run('[private-web]:copy-system-setup-script', '[private-web]:browser-sync-reload'));
+            watch(config.source.files.main, () => run('[private-web]:copy-template', '[private-web]:browser-sync-reload'));
         }
     }
 
