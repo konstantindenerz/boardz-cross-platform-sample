@@ -38,16 +38,13 @@
         });
 
         gulp.task('[private-cordova]:copy-source', function () {
-            let files = path.join(config.targets.buildFolder, '**', '*.*');
-
-            if (deltaFiles.length) {
-                files = deltaFiles;
-            }
+            let files = gulp.src(path.join(config.targets.buildFolder, '**', '*.*'), { base: config.targets.buildFolder });
+            files.on('end', () => browserSync.reload());
             return copySources(files);
         });
 
         function copySources(files) {
-            return gulp.src(files, { base: config.targets.buildFolder })
+            return files
                 .pipe(gulp.dest(path.join(config.targets.cordovaFolder, 'www')))
                 .pipe(count('Copied ## files to Cordova www folder'));
         }
@@ -55,14 +52,6 @@
         gulp.task('[private-cordova]:start-browser-sync:ios', function () {
             browserSync.init(browserSyncConfigIos);
         });
-        let deltaFiles = [];
-
-        function fillFilePathArray(target, source) {
-            let file;
-            while (file = source.read()) {
-                target.push(file.path);
-            }
-        }
 
         gulp.task('watch-cordova-ios', ['[private-cordova]:start-browser-sync:ios'], function () {
             runSequence('[private-cordova]:clean',
@@ -73,10 +62,9 @@
                 '[private-cordova]:copy:hooks',
                 '[private-cordova]:build:ios');
 
-            watch(path.join(config.targets.buildFolder, '**', '*'), { base: config.targets.buildFolder }, batch(function (events, done) {
-                deltaFiles.length = 0;
-                fillFilePathArray(deltaFiles, events);
-                runSequence('[private-cordova]:copy-source', function () {
+            watch(path.join(config.targets.buildFolder, '**', '*'), { base: config.targets.buildFolder }, batch(function (files, done) {
+                copySources(files);
+                files.on('end', () => {
                     browserSync.reload();
                     var currentDir = sh.pwd();
                     sh.cd(path.join(__dirname, '..', config.targets.cordovaFolder));
