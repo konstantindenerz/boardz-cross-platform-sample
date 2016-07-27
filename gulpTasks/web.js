@@ -193,7 +193,6 @@
                 }
                 result.push(path);
             }
-            console.log('FILES', result);
             return result;
         }
 
