@@ -39,13 +39,19 @@
 
         gulp.task('[private-cordova]:copy-source', function () {
             let files = gulp.src(path.join(config.targets.buildFolder, '**', '*.*'), { base: config.targets.buildFolder });
-            files.on('end', () => browserSync.reload());
             return copySources(files);
         });
 
         function copySources(files) {
             return files
                 .pipe(gulp.dest(path.join(config.targets.cordovaFolder, 'www')))
+                .on('end', () => {
+                    var currentDir = sh.pwd();
+                    sh.cd(path.join(__dirname, '..', config.targets.cordovaFolder));
+                    sh.exec('cordova prepare ios');
+                    sh.cd(currentDir);
+                    browserSync.reload();
+                })
                 .pipe(count('Copied ## files to Cordova www folder'));
         }
 
@@ -63,15 +69,7 @@
                 '[private-cordova]:build:ios');
 
             watch(path.join(config.targets.buildFolder, '**', '*'), { base: config.targets.buildFolder }, batch(function (files, done) {
-                copySources(files);
-                files.on('end', () => {
-                    browserSync.reload();
-                    var currentDir = sh.pwd();
-                    sh.cd(path.join(__dirname, '..', config.targets.cordovaFolder));
-                    sh.exec('cordova prepare ios');
-                    sh.cd(currentDir);
-                    done();
-                });
+                return copySources(files);
             }));
         });
 
