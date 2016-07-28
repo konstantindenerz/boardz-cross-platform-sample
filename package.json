@@ -13,7 +13,7 @@
     "watch": "gulp watch-web",
     "postinstall": "typings install",
     "build": "gulp",
-    "watch-ios": "gulp [private-web]:watch:no-browser-sync & gulp watch-cordova-ios"
+    "watch-ios": "gulp watch-cordova-ios"
   },
   "author": "Thinktecture AG <office@thinktecture.com>",
   "bugs": {
