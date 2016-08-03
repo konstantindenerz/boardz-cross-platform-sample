@@ -49,6 +49,7 @@ module.exports = {
                 './src/BoardZ/vendor/leaflet-js/leaflet.css'
             ],
             vendorFonts: [
+                './src/BoardZ/system.setup.js',
                 './src/BoardZ/vendor/font-awesome/fonts/*.*',
                 './src/BoardZ/vendor/bootstrap/fonts/*.*'
             ],
@@ -61,7 +62,7 @@ module.exports = {
                 './src/BoardZ/vendor/jquery/jquery-2.1.4.js',
                 './src/BoardZ/vendor/jquery/jquery.hammer.js',
                 './src/BoardZ/vendor/jquery/jquery.slimscroll.js',
-                './src/BoardZ/vendor/pNotify/pnotify-adapter.js',
+                './node_modules/pnotify/dist/pnotify.js',
                 './src/BoardZ/vendor/pNotify/pnotify.custom.js',
                 './src/BoardZ/vendor/signalr/signalr.js',
                 './src/BoardZ/vendor/bootstrap/js/bootstrap.js',

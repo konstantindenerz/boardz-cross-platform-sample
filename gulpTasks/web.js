@@ -24,7 +24,9 @@
             Builder = require('systemjs-builder'),
             count = require('gulp-count'),
             embedTemplates = require('gulp-angular2-embed-templates'),
-            replaceExt = require('replace-ext');
+            replaceExt = require('replace-ext'),
+            pump = require('pump');
+
 
         gulp.task('[private-web]:copy-template', function () {
             var sources = gulp.src(config.source.files.injectables);
@@ -34,21 +36,13 @@
                 .pipe(gulp.dest(path.join(config.targets.buildFolder)));
         });
 
-        gulp.task('[private-web]:bundle-vendor-scripts', function () {
-            var builder = new Builder();
-            gulp.src(config.source.files.angular2rc1deps)
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, 'scripts')));
-
-            return builder.loadConfig(config.systemJsConfig)
-                .then(function () {
-                    var promises = [];
-
-                    config.source.files.vendorJs.forEach(function (jsFile) {
-                        promises.push(builder.bundle(jsFile, path.join(config.targets.buildFolder, 'scripts/bundles', path.basename(jsFile))));
-                    });
-
-                    return Promise.all(promises);
-                })
+        gulp.task('[private-web]:bundle-vendor-scripts', function (done) {
+            pump([
+                gulp.src(config.source.files.angular2rc1deps.concat(config.source.files.vendorJs)),
+                concat('vendor.min.js'),
+                uglify(),
+                gulp.dest(path.join(config.targets.buildFolder, 'scripts'))
+            ], done);
         });
 
         gulp.task('[private-web]:bundle-angular2-scripts', function () {
@@ -64,12 +58,6 @@
                 }
             });
             return builder.bundle('rxjs', path.join(config.targets.buildFolder, 'scripts/bundles', 'Rx.js'));
-        });
-
-        gulp.task('[private-web]:copy-system-setup-script', function () {
-            return gulp.src(config.source.files.systemSetupScript)
-                .pipe(uglify())
-                .pipe(gulp.dest(path.join(config.targets.buildFolder, 'scripts/')));
         });
 
         gulp.task('[private-web]:copy-cordova-script', function () {
