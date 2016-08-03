@@ -158,6 +158,12 @@
             );
         });
 
+        gulp.task('[private-web]:copy-system-setup-script', function () {
+            return gulp.src(config.source.files.systemSetupScript)
+                .pipe(uglify())
+                .pipe(gulp.dest(path.join(config.targets.buildFolder, 'scripts/')));
+        });
+
         gulp.task('[private-web]:start-browser-sync', ['build-web'], function () {
             browserSync.init(browserSyncConfig);
         });
